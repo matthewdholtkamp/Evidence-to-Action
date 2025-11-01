@@ -1,92 +1,1002 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Medical Literature Summarizer</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
-<style>
-.font-roboto-condensed { font-family: 'Roboto Condensed', sans-serif; }
-.font-inter { font-family: 'Inter', sans-serif; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Journal Club</title>
+    <style>
+        /* --- Dark Theme Colors --- */
+        :root {
+            --bg-primary: #1a1a2e; /* Dark Blue-Purple */
+            --bg-secondary: #0f3460; /* Slightly lighter for containers */
+            --text-primary: #e0e0e0; /* Light gray text */
+            --text-secondary: #a0a0a0; /* Muted text */
+            --accent-color: #e94560; /* Vibrant Red/Pink for accents */
+            --title-color: #F39C12; /* Orange for title */
+            --button-bg: #533483; /* Darker purple for main buttons */
+            --button-hover-bg: #63409a;
+            --input-bg: #2a2a4a;
+            --input-border: #444466;
+            --header-bg: #16213e; /* Even darker header */
+            --disclaimer-bg: #2b2b4e;
+            --disclaimer-border: #4a4a6e;
+            --disclaimer-text: #b0b0d0;
+            --toolbar-bg: #232946;
+            --tab-inactive: #a0a0a0;
+            --tab-active: var(--accent-color);
+            --tab-border: #3a3a5e;
+            --code-bg: #232a3f;
+            --code-border: #3a4a6e;
+        }
+
+        /* --- Basic Setup --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        /* --- Header & Disclaimer --- */
+        header {
+            padding: 24px 32px;
+            background-color: var(--header-bg);
+            color: var(--text-primary);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.75rem;
+            text-align: center;
+            color: var(--title-color);
+        }
+        .disclaimer {
+            background-color: var(--disclaimer-bg);
+            color: var(--disclaimer-text);
+            border: 1px solid var(--disclaimer-border);
+            padding: 16px;
+            margin: 32px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        /* --- Form Inputs (Shared Styles) --- */
+        .form-section {
+            padding: 0 32px 32px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+        .form-group label span {
+            font-weight: 400;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        .form-group input[type="text"] {
+            padding: 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            font-size: 1rem;
+            background-color: var(--input-bg);
+            color: var(--text-primary);
+        }
+        .form-group input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(233, 69, 96, 0.3);
+        }
+        .form-button {
+            background-color: var(--button-bg);
+            color: var(--text-primary);
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+        .form-button:hover {
+            background-color: var(--button-hover-bg);
+        }
+        .form-button:disabled {
+            background-color: #4a4a6a;
+            cursor: not-allowed;
+            color: #888;
+        }
+
+        /* --- Refinement Area Specifics --- */
+        #refinementForm h3 {
+            margin: 0 0 10px 0;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--tab-border);
+            padding-bottom: 10px;
+        }
+        
+        #refinementForm .form-button {
+            background-color: var(--accent-color); /* Make second button stand out */
+        }
+        #refinementForm .form-button:hover {
+            background-color: #c73a52;
+        }
+
+
+        /* --- Loader --- */
+        #loader {
+            display: none; /* Hidden by default */
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+        .spinner {
+            border: 4px solid var(--input-border);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- Results Section --- */
+        #results {
+            padding: 0;
+        }
+        .hidden {
+            display: none;
+        }
+
+        /* Action Toolbar */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 16px 32px;
+            background-color: var(--toolbar-bg);
+            border-bottom: 1px solid var(--tab-border);
+        }
+        .toolbar button {
+            background-color: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--input-border);
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .toolbar button:hover {
+            background-color: #3a3a5e;
+        }
+        .toolbar button#btnAudio {
+            background-color: #3c6e71; /* A green-ish accent for audio */
+            border-color: #5c8b8e;
+            color: #e0f2f1;
+        }
+        .toolbar button#btnAudio:hover {
+            background-color: #4c8a8e;
+        }
+        .toolbar button:disabled {
+            background-color: #33334f;
+            color: #777;
+            cursor: not-allowed;
+            border-color: #4a4a6a;
+        }
+
+        /* Tabs */
+        .tab-nav {
+            display: flex;
+            border-bottom: 1px solid var(--tab-border);
+            padding: 0 32px;
+        }
+        .tab-nav button {
+            padding: 14px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--tab-inactive);
+            border-bottom: 3px solid transparent;
+            margin-bottom: -1px;
+        }
+        .tab-nav button.active {
+            color: var(--tab-active);
+            border-bottom-color: var(--tab-active);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            padding: 24px 32px 32px;
+        }
+        /* Custom message box for alerts */
+        #messageBox {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--accent-color);
+            color: var(--text-primary);
+            padding: 16px 24px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1000;
+            font-size: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        #messageBox.show {
+            display: block;
+            opacity: 1;
+        }
+
+        #summaryContent {
+            white-space: pre-wrap; /* Preserves formatting */
+            line-height: 1.7;
+            font-family: "Georgia", serif;
+            color: var(--text-primary);
+        }
+        #referencesContent {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-family: "Courier New", monospace;
+            font-size: 0.9rem;
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 4px;
+            border: 1px solid var(--code-border);
+            color: var(--text-secondary);
+        }
+        #sourcesContent ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        #sourcesContent li {
+            margin-bottom: 12px;
+        }
+        #sourcesContent a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        #sourcesContent a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    
+    <!-- ADDED THIS SCRIPT to render math symbols like ≥, ≈, etc. -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
-<body class="bg-gray-900 text-zinc-200 font-inter min-h-screen">
-<div class="max-w-3xl mx-auto p-4">
-<h1 class="text-orange-400 text-3xl font-roboto-condensed mb-4">Medical Literature Summarizer</h1>
-<label for="topic" class="block mb-2 font-roboto-condensed">Enter your medical question or topic:</label>
-<input type="text" id="topic" class="w-full text-gray-900 p-2 rounded-md mb-4">
-<button id="submit" class="px-4 py-2 rounded-md font-bold bg-orange-600 text-white hover:bg-orange-700 mb-4">Submit</button>
-<div id="questionArea" class="my-4 p-4 bg-gray-800 rounded-lg border border-gray-700 hidden"></div>
-<div id="summaryArea" class="my-4 p-4 bg-gray-800 rounded-lg border border-gray-700 hidden"></div>
-<div id="buttonsArea" class="mt-4 space-x-2 hidden">
-<button id="audioDownload" class="px-4 py-2 rounded-md font-bold bg-blue-600 text-white hover:bg-blue-700">Download Lecture Audio</button>
-<button id="keyDownload" class="px-4 py-2 rounded-md font-bold bg-blue-600 text-white hover:bg-blue-700">Download Key Points</button>
-</div>
-</div>
-<script>
-async function askFollowUps(topic) {
-  const response = await fetch('/.netlify/functions/gemini-proxy', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: topic, operation: 'followups' })
-  });
-  const data = await response.json();
-  return data.result.trim();
-}
+<body>
 
-async function getSummary(prompt) {
-  const response = await fetch('/.netlify/functions/gemini-proxy', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: prompt, operation: 'summary' })
-  });
-  const data = await response.json();
-  return data.result.trim();
-}
+    <div class="container">
+        <header>
+            <h1>Medical Journal Club</h1>
+        </header>
+        
+        <p class="disclaimer">
+            <strong>For educational and informational purposes only.</strong> This tool does not provide medical advice and is not a substitute for professional clinical judgment.
+        </p>
 
-async function getKeyPoints(prompt) {
-  const response = await fetch('/.netlify/functions/gemini-proxy', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: prompt, operation: 'keypoints' })
-  });
-  const data = await response.json();
-  return data.result.trim();
-}
+        <!-- --- STEP 1: Initial Question Form --- -->
+        <form id="queryForm" class="form-section">
+            <div class="form-group">
+                <label for="initialQuestion">1. Enter a Medical Topic or Question
+                    <span>e.g., "new treatments for sepsis," "management of status epilepticus"</span>
+                </label>
+                <input type="text" id="initialQuestion" required>
+            </div>
+            <button type="submit" id="refineButton" class="form-button">Refine Topic</button>
+        </form>
+        
+        <!-- --- STEP 2: Refinement Questions (hidden by default) --- -->
+        <form id="refinementForm" class="form-section hidden">
+            <h3>Please refine your topic:</h3>
+            <div id="dynamicFormContainer">
+                <!-- Generated free-text inputs will be injected here -->
+            </div>
+            <button type="submit" id="generateButton" class="form-button">Generate Summary</button>
+        </form>
 
-async function generateAudio(text) {
-  const utterance = new SpeechSynthesisUtterance('Hello, I am Dr. Matthew Holtkamp. ' + text);
-  speechSynthesis.speak(utterance);
-}
+        <!-- --- STEP 3: Loader --- -->
+        <div id="loader">
+            <div class="spinner"></div>
+            <p id="loaderText">Synthesizing medical literature...</p>
+        </div>
 
-document.getElementById('submit').onclick = async () => {
-  const topic = document.getElementById('topic').value.trim();
-  if (!topic) return;
-  const questionArea = document.getElementById('questionArea');
-  const summaryArea = document.getElementById('summaryArea');
-  const buttonsArea = document.getElementById('buttonsArea');
-  questionArea.classList.remove('hidden');
-  summaryArea.classList.remove('hidden');
-  questionArea.innerHTML = '<h2 class="text-xl font-roboto-condensed text-orange-400 mb-2">Follow-up questions</h2><p>Loading...</p>';
-  const followups = await askFollowUps(topic);
-  questionArea.innerHTML = '<h2 class="text-xl font-roboto-condensed text-orange-400 mb-2">Follow-up questions</h2><pre>' + followups + '</pre>';
-  summaryArea.innerHTML = '<h2 class="text-xl font-roboto-condensed text-orange-400 mb-2">Journal Club Summary</h2><p>Generating summary...</p>';
-  const summary = await getSummary(topic);
-  summaryArea.innerHTML = '<h2 class="text-xl font-roboto-condensed text-orange-400 mb-2">Journal Club Summary</h2><pre>' + summary + '</pre>';
-  const keyPoints = await getKeyPoints(topic);
-  buttonsArea.classList.remove('hidden');
-  document.getElementById('audioDownload').onclick = () => {
-    generateAudio(summary);
-  };
-  document.getElementById('keyDownload').onclick = () => {
-    const blob = new Blob([keyPoints], { type:'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'key_points.txt';
-    link.click();
-  };
-};
-</script>
+        <!-- --- STEP 4: Results --- -->
+        <div id="results" class="hidden">
+            <!-- Action Toolbar -->
+            <div class="toolbar">
+                <button id="btnAudio">Download Audio Lecture (.wav)</button>
+                <button id="btnKeyPoints">Download Key Points (.txt)</button>
+                <button id="btnCopySummary">Copy Summary</button>
+                <button id="btnCopyRefs">Copy References</button>
+            </div>
+
+            <!-- Tab Navigation -->
+            <nav class="tab-nav">
+                <button class="tab-link active" data-tab="summary">Journal Club Summary</button>
+                <button class="tab-link" data-tab="references">APA References</button>
+                <button class="tab-link" data-tab="sources">Verified Sources</button>
+            </nav>
+
+            <!-- Tab Content -->
+            <div id="summary" class="tab-content">
+                <div id="summaryContent"></div>
+            </div>
+            <div id="references" class="tab-content hidden">
+                <div id="referencesContent"></div>
+            </div>
+            <div id="sources" class="tab-content hidden">
+                <div id="sourcesContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message box for copy confirmations, etc. -->
+    <div id="messageBox"></div>
+
+    <!-- Helper library for audio conversion -->
+    <script src="https://cdn.jsdelivr.net/npm/pcm-to-wav@1.0.1/build/pcm-to-wav.min.js"></script>
+
+    <script>
+        // --- API Configuration ---
+        // !!! IMPORTANT: Replace "YOUR_API_KEY" with your actual Google AI API key
+        const API_KEY = "AIzaSyB4icRH1sBnW4nFfVbM2vocXDzpxQsdPoI"; 
+        
+        // Model for text generation (with search)
+        const GENERATE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+        
+        // Model for Text-to-Speech (TTS)
+        const TTS_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${API_KEY}`;
+
+
+        // --- DOM Element References ---
+        const queryForm = document.getElementById('queryForm');
+        const refineButton = document.getElementById('refineButton');
+        const initialQuestionInput = document.getElementById('initialQuestion');
+        
+        const refinementForm = document.getElementById('refinementForm');
+        const dynamicFormContainer = document.getElementById('dynamicFormContainer');
+        const generateButton = document.getElementById('generateButton');
+        
+        const loader = document.getElementById('loader');
+        const loaderText = document.getElementById('loaderText');
+        const results = document.getElementById('results');
+        
+        const summaryContent = document.getElementById('summaryContent');
+        const referencesContent = document.getElementById('referencesContent');
+        const sourcesContent = document.getElementById('sourcesContent');
+        
+        const tabLinks = document.querySelectorAll('.tab-link');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        const btnAudio = document.getElementById('btnAudio');
+        const btnKeyPoints = document.getElementById('btnKeyPoints');
+        const btnCopySummary = document.getElementById('btnCopySummary');
+        const btnCopyRefs = document.getElementById('btnCopyRefs');
+        
+        const messageBox = document.getElementById('messageBox');
+
+        // --- Global State ---
+        let currentSummary = ""; // Stores the main summary for reuse
+
+        // --- Event Listeners ---
+        queryForm.addEventListener('submit', handleInitialSubmit);
+        refinementForm.addEventListener('submit', handleSummaryFormSubmit);
+        
+        btnKeyPoints.addEventListener('click', handleDownloadKeyPoints);
+        btnAudio.addEventListener('click', handleDownloadAudio);
+        btnCopySummary.addEventListener('click', () => copyToClipboard(currentSummary, 'Summary'));
+        btnCopyRefs.addEventListener('click', () => copyToClipboard(referencesContent.innerText, 'References'));
+
+        tabLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                const tabId = link.getAttribute('data-tab');
+                
+                // Update tab links
+                tabLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+
+                // Update tab content
+                tabContents.forEach(content => {
+                    if (content.id === tabId) {
+                        content.classList.remove('hidden');
+                    } else {
+                        content.classList.add('hidden');
+                    }
+                });
+            });
+        });
+
+
+        // --- Core Functions ---
+        
+        /**
+         * Generic function to make API calls with exponential backoff.
+         */
+        async function fetchWithRetry(url, payload, maxRetries = 3) {
+            let attempt = 0;
+            while (attempt < maxRetries) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 429) { // Throttling
+                        const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+                        await new Promise(res => setTimeout(res, delay));
+                        attempt++;
+                        continue;
+                    }
+
+                    if (!response.ok) {
+                        const errorBody = await response.text();
+                        console.error("API Error Body:", errorBody);
+                        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                    }
+                    
+                    return await response.json();
+
+                } catch (error) {
+                    attempt++;
+                    if (attempt >= maxRetries) {
+                        throw error;
+                    }
+                }
+            }
+        }
+
+
+        /**
+         * 1. Handles the INITIAL form submission (Step 1)
+         */
+        async function handleInitialSubmit(e) {
+            e.preventDefault();
+            
+            if (API_KEY === "YOUR_API_KEY") {
+                showMessage("Error: Please add your Google AI API key to the index.html file.");
+                return;
+            }
+            
+            // 1. Get user input
+            const initialQuestion = initialQuestionInput.value;
+            if (!initialQuestion) return;
+
+            // 2. Construct the "Refinement" prompt
+            const refinementPrompt = `
+                You are a medical research assistant. Based on the user's topic: "${initialQuestion}", generate exactly 5 specific, high-yield follow-up questions to help them narrow their focus for a literature review. These questions will be used as labels for free-text input fields.
+                
+                Provide your response as a list of questions, each on a new line, prefixed with "Q:".
+                Make them sound like PICO categories.
+                
+                Example:
+                Q: What is the specific Patient Population or Problem (P)?
+                Q: What is the Intervention being studied (I)?
+                Q: What is the Comparison or Control group (C)?
+                Q: What are the primary Outcome(s) of interest (O)?
+                Q: What Study Types or Timeframe should be prioritized?
+            `;
+
+            // 3. Show loader and hide old results/questions
+            loaderText.innerText = "Generating refinement questions...";
+            loader.style.display = 'block';
+            results.classList.add('hidden');
+            refinementForm.classList.add('hidden');
+            refineButton.disabled = true;
+            
+            // 4. Call the API (no search tool needed for this step)
+            try {
+                const payload = {
+                    "contents": [{ "parts": [{ "text": refinementPrompt }] }]
+                };
+
+                const apiData = await fetchWithRetry(GENERATE_API_URL, payload);
+                
+                const candidate = apiData.candidates?.[0];
+                if (!candidate || !candidate.content?.parts?.[0]?.text) {
+                    throw new Error("Invalid API response structure for refinement.");
+                }
+
+                const rawText = candidate.content.parts[0].text;
+                // Parse the text response
+                const questions = rawText.split('\n')
+                                         .filter(line => line.startsWith('Q:'))
+                                         .map(line => line.substring(3).trim());
+                
+                if (questions.length === 0) {
+                    // Fallback in case the model doesn't follow the 'Q:' prefix
+                    const fallbackQuestions = rawText.split('\n').filter(line => line.trim().length > 0 && line.includes('?'));
+                    if (fallbackQuestions.length > 0) {
+                         displayRefinementForm(fallbackQuestions);
+                    } else {
+                        // Hardcoded fallback if AI fails
+                        const defaultQuestions = [
+                            "What is the specific Patient Population or Problem (P)?",
+                            "What is the Intervention being studied (I)?",
+                            "What is the Comparison or Control group (C)?",
+                            "What are the primary Outcome(s) of interest (O)?",
+                            "What Study Types or Timeframe should be prioritized?"
+                        ];
+                        displayRefinementForm(defaultQuestions);
+                    }
+                } else {
+                    displayRefinementForm(questions);
+                }
+
+            } catch (error) {
+                console.error('Error fetching refinement questions:', error);
+                loaderText.innerText = `Error: ${error.message}. Please check your API key and console.`;
+            } finally {
+                refineButton.disabled = false;
+                // Keep loader hidden, it's handled by displayRefinementForm
+            }
+        }
+        
+        /**
+         * 2. Displays the 5 refinement questions as free-text inputs (Step 2)
+         */
+        function displayRefinementForm(questions) {
+            dynamicFormContainer.innerHTML = ''; // Clear old form
+            
+            if (!questions || questions.length === 0) {
+                dynamicFormContainer.innerHTML = '<p>Could not generate follow-up questions. Please try again.</p>';
+            } else {
+                questions.forEach((question, index) => {
+                    const formGroup = document.createElement('div');
+                    formGroup.className = 'form-group';
+                    
+                    const label = document.createElement('label');
+                    label.setAttribute('for', `refinement_input_${index}`);
+                    label.innerText = question;
+                    
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.id = `refinement_input_${index}`;
+                    input.className = 'refinement-input';
+                    
+                    formGroup.appendChild(label);
+                    formGroup.appendChild(input);
+                    dynamicFormContainer.appendChild(formGroup);
+                });
+            }
+
+            loader.style.display = 'none';
+            refinementForm.classList.remove('hidden');
+        }
+
+        /**
+         * 3. Handles the click on the "Generate Summary" button (Step 3)
+         */
+        async function handleSummaryFormSubmit(e) {
+            e.preventDefault();
+            
+            // 1. Gather all the data from the dynamic form
+            const inputs = dynamicFormContainer.querySelectorAll('.refinement-input');
+            const labels = dynamicFormContainer.querySelectorAll('label');
+            let structuredQuery = "";
+            
+            labels.forEach((label, index) => {
+                const question = label.innerText;
+                const answer = inputs[index].value;
+                if (answer.trim() !== "") { // Only include non-empty fields
+                    structuredQuery += `- ${question}: ${answer}\n`;
+                }
+            });
+
+            if (structuredQuery === "") {
+                showMessage("Please fill out at least one refinement field.");
+                return;
+            }
+
+            const initialTopic = initialQuestionInput.value;
+            
+            // 2. Construct the main prompt using the structured query
+            const mainPrompt = `
+                You are an expert medical researcher and synthesizer. Your task is to perform a literature review based on an initial topic and the user's refined parameters.
+                
+                **Initial Topic:**
+                ${initialTopic}
+                
+                **Refined Parameters:**
+                ${structuredQuery}
+                
+                **Instructions:**
+                1.  Synthesize the user's parameters to answer their implied clinical question.
+                2.  Generate a comprehensive summary in a "Journal Club" format. It must include the following sections (use these as simple subheadings, no bolding):
+                    Introduction and Background: Briefly state the clinical question and its importance.
+                    Key Studies and Methodology: Describe the key studies found (e.g., RCTs, meta-analyses) and their methods.
+                    Key Findings: Synthesize the main results related to the requested outcomes.
+                    Discussion and Clinical Bottom Line: Provide a brief discussion of limitations and a clear, actionable conclusion for a busy provider.
+                3.  You **MUST** use the Google Search tool to find relevant, up-to-date and reputable sources that match the user's parameters.
+                4.  Prioritize guidelines from professional societies (AHA, ASA, SCCM) and high-impact journals (NEJM, JAMA, The Lancet, PubMed).
+                5.  **FORMATTING:** The output must be plain text. Do not use any bolding, italics, markdown, tables, or other special styling. Use standard paragraphs.
+                
+                **Output Format:**
+                FIRST, provide the complete journal club summary.
+                SECOND, insert the exact delimiter "---APA_REFERENCES---".
+                THIRD, provide the complete list of all cited articles in APA 7th edition format.
+                
+                Example:
+                Introduction and Background
+                [Summary text]...
+                ...[End of summary].
+                ---APA_REFERENCES---
+                Author, A. A. (Year). Title...
+                Author, B. B. (Year). Title...
+            `;
+
+            // 3. Show loader and hide refinement form
+            loaderText.innerText = "Synthesizing medical literature...";
+            loader.style.display = 'block';
+            results.classList.add('hidden');
+            refinementForm.classList.add('hidden');
+            refineButton.disabled = true; 
+            generateButton.disabled = true;
+
+            // 4. Call the API (WITH search tool)
+            try {
+                const payload = {
+                    "contents": [{ "parts": [{ "text": mainPrompt }] }],
+                    "tools": [{ "google_search": {} }] // This enables the search tool
+                };
+
+                const apiData = await fetchWithRetry(GENERATE_API_URL, payload);
+                
+                const candidate = apiData.candidates?.[0];
+                if (!candidate || !candidate.content?.parts?.[0]?.text) {
+                    throw new Error("Invalid API response structure or empty response from model.");
+                }
+
+                // Extract the raw text and parse it based on our custom delimiter
+                const rawText = candidate.content.parts[0].text;
+                const parts = rawText.split('---APA_REFERENCES---');
+                
+                if (parts.length < 2) {
+                    // Model failed to follow instructions, just show the raw text as summary
+                    console.error("Response format error: Could not find '---APA_REFERENCES---' delimiter.");
+                    const parsedData = {
+                        journalClubSummary: rawText.trim(),
+                        apaReferences: "Could not parse references from response. See summary for details."
+                    };
+                    displayResults(parsedData, []); // Pass empty citations array
+                } else {
+                     const parsedData = {
+                        journalClubSummary: parts[0].trim(),
+                        apaReferences: parts[1].trim()
+                    };
+                     // Get source citations (grounding metadata)
+                    let citations = [];
+                    const groundingMetadata = candidate.groundingMetadata;
+                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                        citations = groundingMetadata.groundingAttributions
+                            .map(attr => ({
+                                uri: attr.web?.uri,
+                                title: attr.web?.title,
+                            }))
+                            .filter(source => source.uri && source.title);
+                    }
+                    
+                    displayResults(parsedData, citations);
+                }
+
+            } catch (error)
+            {
+                console.error('Error fetching summary:', error);
+                loaderText.innerText = `Error: ${error.message}. Please check your API key and console.`;
+            } 
+            finally 
+            {
+                refineButton.disabled = false; // Re-enable main button
+                generateButton.disabled = false; // Re-enable summary button
+            }
+        }
+
+        /**
+         * 4. Displays the final results from the API call (Step 4)
+         */
+        function displayResults(data, citations) {
+            // 1. Store and populate text
+            currentSummary = data.journalClubSummary;
+            summaryContent.innerText = data.journalClubSummary;
+            referencesContent.innerText = data.apaReferences;
+
+            // This is the key part for MathJax:
+            // After setting the text, we need to tell MathJax to look for and typeset any new math.
+            if (window.MathJax) {
+                window.MathJax.typesetPromise([summaryContent])
+                    .catch((err) => console.log('MathJax Typeset Error: ', err));
+            }
+
+
+            // 2. Populate sources
+            sourcesContent.innerHTML = ''; // Clear old sources
+            if (citations && citations.length > 0) {
+                const list = document.createElement('ul');
+                citations.forEach(source => {
+                    const item = document.createElement('li');
+                    const link = document.createElement('a');
+                    link.href = source.uri;
+                    link.textContent = source.title || source.uri;
+                    link.target = "_blank"; // Open in new tab
+                    item.appendChild(link);
+                    list.appendChild(item);
+                });
+                sourcesContent.appendChild(list);
+            } else {
+                sourcesContent.innerHTML = '<p>No direct source URLs were returned by the API for this query.</p>';
+            }
+            
+            // 3. Hide loader and show results
+            loader.style.display = 'none';
+            results.classList.remove('hidden');
+
+            // 4. Reset to the first tab
+            tabLinks.forEach(l => l.classList.remove('active'));
+            tabContents.forEach(c => c.classList.add('hidden'));
+            document.querySelector('.tab-link[data-tab="summary"]').classList.add('active');
+            document.getElementById('summary').classList.remove('hidden');
+        }
+
+        /**
+         * 5. Handles the "Download Key Points" button click.
+         */
+        async function handleDownloadKeyPoints() {
+            if (!currentSummary) return;
+
+            loaderText.innerText = "Generating key points...";
+            loader.style.display = 'block';
+            btnKeyPoints.disabled = true;
+
+            const keyPointsPrompt = `
+                You are a medical educator. Convert the following journal club summary into a concise, 'high-yield' bulleted list of key takeaways for a busy clinician.
+                Focus on the clinical bottom line and actionable points. 
+                **FORMATTING:** Do not use markdown, bolding, or any other styling for the output. Just plain text bullet points (using a hyphen - or asterisk *).
+                
+                SUMMARY:
+                ---
+                ${currentSummary}
+                ---
+            `;
+            
+            try {
+                const payload = {
+                    "contents": [{ "parts": [{ "text": keyPointsPrompt }] }]
+                };
+                
+                const apiData = await fetchWithRetry(GENERATE_API_URL, payload);
+
+                const candidate = apiData.candidates?.[0];
+                if (!candidate || !candidate.content?.parts?.[0]?.text) {
+                    throw new Error("Invalid API response structure or empty response from model.");
+                }
+
+                const keyPointsText = candidate.content.parts[0].text;
+                
+                downloadAsFile('key_points.txt', new Blob([keyPointsText], { type: 'text/plain' }));
+
+            } catch (error) {
+                console.error('Error generating key points:', error);
+                showMessage(`Error generating key points: ${error.message}`);
+            } finally {
+                loader.style.display = 'none';
+                btnKeyPoints.disabled = false;
+            }
+        }
+
+        /**
+         * 6. Handles "Download Audio" button.
+         */
+        async function handleDownloadAudio() {
+            if (!currentSummary) return;
+
+            loaderText.innerText = "Generating audio lecture... This may take a moment.";
+            loader.style.display = 'block';
+            btnAudio.disabled = true;
+            
+            // Create a plain text version for the audio prompt, stripping any potential lingering mathjax code
+            let plainTextSummary = currentSummary;
+            // Simple regex to strip TeX-like commands
+            plainTextSummary = plainTextSummary.replace(/\\\[.*?\\\]/g, ' '); // block math
+            plainTextSummary = plainTextSummary.replace(/\\\(.*?\\\)/g, ' '); // inline math
+            plainTextSummary = plainTextSummary.replace(/\$.*?\$/g, ' '); // dollar sign math
+            plainTextSummary = plainTextSummary.replace(/\\(approx|geq|leq|pm|times|cdot|etc)/g, ' '); // common symbols
+            plainTextSummary = plainTextSummary.replace(/\{|\}/g, ' '); // curly braces
+            plainTextSummary = plainTextSummary.replace(/\s\s+/g, ' '); // clean up extra whitespace
+
+            const ttsPrompt = `Say in a clear, professional, and informative tone: ${plainTextSummary}`;
+
+            try {
+                const payload = {
+                    "contents": [{ "parts": [{ "text": ttsPrompt }] }],
+                    "generationConfig": {
+                        "responseModalities": ["AUDIO"],
+                        "speechConfig": {
+                            "voiceConfig": { "prebuiltVoiceConfig": { "voiceName": "Charon" } } // "Charon" is an informative voice
+                        }
+                    },
+                    "model": "gemini-2.5-flash-preview-tts"
+                };
+
+                const apiData = await fetchWithRetry(TTS_API_URL, payload);
+
+                const part = apiData.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (!audioData || !mimeType || !mimeType.startsWith("audio/L16")) {
+                    throw new Error("Invalid audio data received from API.");
+                }
+
+                const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000; // Default to 24kHz if not specified
+
+                const pcmData = base64ToArrayBuffer(audioData);
+                const pcm16 = new Int16Array(pcmData);
+                
+                // Check if the audio conversion library loaded
+                if (typeof window.pcmToWav !== 'function') {
+                    throw new Error("Audio conversion library (pcmToWav) failed to load. Please check your network connection or ad blockers.");
+                }
+                
+                // Use the pcm-to-wav library from the window object
+                const wavBlob = window.pcmToWav(pcm16, 1, sampleRate); // 1 channel, specified sample rate
+                
+                downloadAsFile('audio_lecture.wav', wavBlob);
+
+            } catch (error) {
+                console.error('Error generating audio:', error);
+                showMessage(`Error generating audio: ${error.message}`);
+            } finally {
+                loader.style.display = 'none';
+                btnAudio.disabled = false;
+            }
+        }
+
+        /**
+         * 7. Utility function to copy text to the clipboard.
+         */
+        async function copyToClipboard(text, item) {
+            
+            // This function tells MathJax to get the plain-text from the rendered math
+            const getCleanText = async () => {
+                if (!window.MathJax) return text; // MathJax not loaded
+
+                try {
+                    // Temporarily create an invisible element to process
+                    const tempDiv = document.createElement('div');
+                    tempDiv.style.position = 'absolute';
+                    tempDiv.style.left = '-9999px';
+                    tempDiv.innerText = text;
+                    document.body.appendChild(tempDiv);
+                    
+                    // Typeset it
+                    await window.MathJax.typesetPromise([tempDiv]);
+                    
+                    // Get the *visitor* to extract text
+                    const visitor = new window.MathJax.core.MmlTree.SerializedMmlVisitor();
+                    const toText = (node) => visitor.visitTree(node, tempDiv);
+                    
+                    // Get the new text content, which MathJax converts to unicode
+                    let cleanText = tempDiv.innerText;
+                    
+                    document.body.removeChild(tempDiv);
+                    return cleanText;
+
+                } catch (err) {
+                    console.error('MathJax text conversion failed:', err);
+                    return text; // Fallback to original text
+                }
+            };
+
+            const cleanText = (item === 'Summary') ? await getCleanText() : text;
+
+            // Using document.execCommand as a fallback for iframe/secure context issues
+            try {
+                const textArea = document.createElement("textarea");
+                textArea.value = cleanText;
+                textArea.style.position = "fixed";  // Avoid scrolling to bottom
+                textArea.style.opacity = "0";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showMessage(`${item} copied to clipboard!`);
+                } else {
+                    throw new Error('execCommand failed');
+                }
+            } catch (err) {
+                // Fallback for modern browsers (might fail in sandboxed iframes)
+                navigator.clipboard.writeText(cleanText).then(() => {
+                    showMessage(`${item} copied to clipboard!`);
+                }, (err) => {
+                    console.error('Failed to copy text: ', err);
+                    showMessage('Failed to copy. See console for errors.');
+                });
+            } finally {
+                const textArea = document.querySelector("textarea");
+                if (textArea) {
+                    document.body.removeChild(textArea);
+                }
+            }
+        }
+
+        /**
+         * 8. Utility function to trigger a file download.
+         */
+        function downloadAsFile(filename, blob) {
+            const blobUrl = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            document.body.removeChild(a);
+            URL.revokeObjectURL(blobUrl);
+        }
+        
+        /**
+         * 9. Utility function to show a custom message.
+         */
+        function showMessage(message) {
+            messageBox.innerText = message;
+            messageBox.classList.add('show');
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 3000);
+        }
+        
+        /**
+         * 10. Utility to convert Base64 to ArrayBuffer (for audio).
+         */
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+    </script>
 </body>
 </html>
+
