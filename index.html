@@ -331,22 +331,29 @@
             <p id="loaderText">Synthesizing medical literature...</p>
         </div>
 
-        <!-- --- STEP 4: Results --- -->
-        <div id="results" class="hidden">
-            <!-- Action Toolbar -->
-            <div class="toolbar">
-                <button id="btnAudio">Download Audio Lecture (.wav)</button>
-                <button id="btnKeyPoints">Download Key Points (.txt)</button>
-                <button id="btnCopySummary">Copy Summary</button>
-                <button id="btnCopyRefs">Copy References</button>
-            </div>
+<!-- --- STEP 4: Results --- -->
+<div id="results" class="hidden">
+    <!-- Action Toolbar -->
+    <div class="toolbar">
+        <button id="btnAudio">Download Audio Lecture (.wav)</button>
+        <button id="btnKeyPoints">Download Key Points (.txt)</button>
+        <button id="btnCopySummary">Copy Summary</button>
+        <button id="btnCopyRefs">Copy References</button>
+    </div>
 
-            <!-- Tab Navigation -->
-            <nav class="tab-nav">
-                <button class="tab-link active" data-tab="summary">Journal Club Summary</button>
-                <button class="tab-link" data-tab="references">APA References</button>
-                <button class="tab-link" data-tab="sources">Verified Sources</button>
-            </nav>
+    <!-- Audio player for generated lecture -->
+    <audio id="audioPlayer" controls style="display:none; margin: 16px 32px 0;"></audio>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-nav">
+        <button class="tab-link active" data-tab="summary">Journal Club Summary</button>
+        <button class="tab-link" data-tab="references">APA References</button>
+        <button class="tab-link" data-tab="sources">Verified Sources</button>
+    </nav>
+
+    <!-- Tab Content ... (rest of your existing code) -->
+    <!-- ... -->
+</div>
 
             <!-- Tab Content -->
             <div id="summary" class="tab-content">
